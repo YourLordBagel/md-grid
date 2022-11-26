@@ -1,0 +1,13 @@
+[package]
+name = "md-grid"
+version = "0.0.1"
+edition = "2021"
+author = "YourLordBagel"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+categories = ["data-structures"]
+keywords = ["2d", "3d", "grid", "multidimensional"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
