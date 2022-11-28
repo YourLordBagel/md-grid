@@ -7,7 +7,7 @@ pub struct Grid<T: Clone> {
     dimensions: Vec<usize>,
 }
 
-impl<T: Clone + Debug> Grid<T> {
+impl<T: Clone> Grid<T> {
     pub fn new(default_value: T, dimensions: Vec<usize>) -> Self {
         let axes = dimensions.len();
 
@@ -31,10 +31,24 @@ impl<T: Clone + Debug> Grid<T> {
         Ok(val)
     }
 
+    pub fn get_mut(&mut self, target: Vec<usize>) -> Result<&mut T, Box<dyn Error>> {
+        let target = self.translate_index(target)?;
+        let val = &mut self.grid[target];
+        Ok(val)
+    }
+
     pub fn set(&mut self, target: Vec<usize>, val: T) -> Result<(), Box<dyn Error>> {
         let target = self.translate_index(target)?;
         self.grid[target] = val;
         Ok(())
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<'_, T> {
+        self.into_iter()
+    }
+
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, T> {
+        self.into_iter()
     }
 
     fn translate_index(&self, target: Vec<usize>) -> Result<usize, Box<dyn Error>> {
@@ -63,6 +77,24 @@ impl<T: Clone + Debug> Grid<T> {
         }
 
         Ok(index)
+    }
+}
+
+impl<'a, T: Clone> IntoIterator for &'a Grid<T> {
+    type Item = &'a T;
+    type IntoIter = core::slice::Iter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.grid.iter()
+    }
+}
+
+impl<'a, T: Clone> IntoIterator for &'a mut Grid<T> {
+    type Item = &'a mut T;
+    type IntoIter = core::slice::IterMut<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.grid.iter_mut()
     }
 }
 
@@ -129,5 +161,19 @@ mod tests {
         // Test default values
         assert_eq!(grid.grid[8654], 0);
         assert_eq!(grid.grid[23], 0);
+    }
+
+    #[test]
+    fn into_iterator() {
+        let mut grid = Grid::new(0, vec![10, 10]);
+
+        for i in grid.iter_mut() {
+            println!("{i}");
+            *i += 1;
+        }
+
+        for i in grid.iter().enumerate() {
+            println!("{}: {}", i.0, i.1);
+        }
     }
 }
