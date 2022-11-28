@@ -1,6 +1,6 @@
 use std::{error::Error, fmt::Debug};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Grid<T: Clone> {
     grid: Vec<T>,
     axes: usize,
@@ -63,7 +63,7 @@ impl<T: Clone> Grid<T> {
 
         let mut index = 0;
         for (i, v) in target.iter().enumerate() {
-            let step = v * &self.dimensions.iter().skip(i + 1).product();
+            let step: usize = v * self.dimensions.iter().skip(i + 1).product::<usize>();
             index += step;
         }
 
@@ -79,6 +79,8 @@ impl<T: Clone> Grid<T> {
         Ok(index)
     }
 }
+
+// TODO: Add custom Iterator to handle .position()
 
 impl<'a, T: Clone> IntoIterator for &'a Grid<T> {
     type Item = &'a T;
