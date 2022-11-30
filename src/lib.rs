@@ -1,3 +1,4 @@
+use core::slice::{Iter, IterMut};
 use std::{error::Error, fmt::Debug};
 
 #[derive(Debug, Clone)]
@@ -43,11 +44,11 @@ impl<T: Clone> Grid<T> {
         Ok(())
     }
 
-    pub fn iter(&self) -> std::slice::Iter<'_, T> {
+    pub fn iter(&self) -> GridIter<'_, T> {
         self.into_iter()
     }
 
-    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, T> {
+    pub fn iter_mut(&mut self) -> GridIterMut<'_, T> {
         self.into_iter()
     }
 
@@ -84,19 +85,57 @@ impl<T: Clone> Grid<T> {
 
 impl<'a, T: Clone> IntoIterator for &'a Grid<T> {
     type Item = &'a T;
-    type IntoIter = core::slice::Iter<'a, T>;
+    type IntoIter = GridIter<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.grid.iter()
+        GridIter::new(self)
     }
 }
 
 impl<'a, T: Clone> IntoIterator for &'a mut Grid<T> {
     type Item = &'a mut T;
-    type IntoIter = core::slice::IterMut<'a, T>;
+    type IntoIter = GridIterMut<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.grid.iter_mut()
+        GridIterMut::new(self)
+    }
+}
+
+pub struct GridIter<'a, T: Clone> {
+    grid: Iter<'a, T>,
+}
+
+impl<'a, T: Clone> GridIter<'a, T> {
+    fn new(grid: &'a Grid<T>) -> Self {
+        let grid = grid.grid.iter();
+        Self { grid }
+    }
+}
+
+impl<'a, T: Clone> Iterator for GridIter<'a, T> {
+    type Item = &'a T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.grid.next()
+    }
+}
+
+pub struct GridIterMut<'a, T: Clone> {
+    grid: IterMut<'a, T>,
+}
+
+impl<'a, T: Clone> GridIterMut<'a, T> {
+    fn new(grid: &'a mut Grid<T>) -> Self {
+        let grid = grid.grid.iter_mut();
+        Self { grid }
+    }
+}
+
+impl<'a, T: Clone> Iterator for GridIterMut<'a, T> {
+    type Item = &'a mut T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.grid.next()
     }
 }
 
