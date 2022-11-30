@@ -81,7 +81,10 @@ impl<T: Clone> Grid<T> {
     }
 }
 
-// TODO: Add custom Iterator to handle .position()
+// TODO: impl false_index
+fn false_index(index: usize, dimensions: &Vec<usize>) -> Vec<usize> {
+    todo!()
+}
 
 impl<'a, T: Clone> IntoIterator for &'a Grid<T> {
     type Item = &'a T;
@@ -103,12 +106,36 @@ impl<'a, T: Clone> IntoIterator for &'a mut Grid<T> {
 
 pub struct GridIter<'a, T: Clone> {
     grid: Iter<'a, T>,
+    dimensions: Vec<usize>,
 }
 
 impl<'a, T: Clone> GridIter<'a, T> {
     fn new(grid: &'a Grid<T>) -> Self {
+        let dimensions = grid.dimensions.clone();
         let grid = grid.grid.iter();
-        Self { grid }
+        Self { grid, dimensions }
+    }
+
+    pub fn position<P>(&mut self, predicate: P) -> Option<Vec<usize>>
+    where
+        P: FnMut(&'a T) -> bool,
+    {
+        if let Some(index) = Iterator::position(self, predicate) {
+            let index = false_index(index, &self.dimensions);
+            return Some(index);
+        }
+
+        None
+    }
+
+    pub fn enumerate<P>(self) -> std::vec::IntoIter<(Vec<usize>, &'a T)> {
+        let dimensions = self.dimensions.clone();
+        let mut res = Vec::with_capacity(self.grid.len());
+        for (i, val) in Iterator::enumerate(self) {
+            let i = false_index(i, &dimensions);
+            res.push((i, val));
+        }
+        res.into_iter()
     }
 }
 
@@ -120,14 +147,17 @@ impl<'a, T: Clone> Iterator for GridIter<'a, T> {
     }
 }
 
+// TODO: impl position and enumerate for GridIterMut
 pub struct GridIterMut<'a, T: Clone> {
     grid: IterMut<'a, T>,
+    dimensions: Vec<usize>,
 }
 
 impl<'a, T: Clone> GridIterMut<'a, T> {
     fn new(grid: &'a mut Grid<T>) -> Self {
+        let dimensions = grid.dimensions.clone();
         let grid = grid.grid.iter_mut();
-        Self { grid }
+        Self { grid, dimensions }
     }
 }
 
@@ -213,8 +243,8 @@ mod tests {
             *i += 1;
         }
 
-        for i in grid.iter().enumerate() {
-            println!("{}: {}", i.0, i.1);
-        }
+        // for i in grid.iter().enumerate() {
+        //     println!("{}: {}", i.0, i.1);
+        // }
     }
 }
