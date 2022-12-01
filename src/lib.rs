@@ -26,19 +26,19 @@ impl<T: Clone> Grid<T> {
         }
     }
 
-    pub fn get(&self, target: Vec<usize>) -> Result<&T, Box<dyn Error>> {
+    pub fn get(&self, target: &[usize]) -> Result<&T, Box<dyn Error>> {
         let target = self.translate_index(target)?;
         let val = &self.grid[target];
         Ok(val)
     }
 
-    pub fn get_mut(&mut self, target: Vec<usize>) -> Result<&mut T, Box<dyn Error>> {
+    pub fn get_mut(&mut self, target: &[usize]) -> Result<&mut T, Box<dyn Error>> {
         let target = self.translate_index(target)?;
         let val = &mut self.grid[target];
         Ok(val)
     }
 
-    pub fn set(&mut self, target: Vec<usize>, val: T) -> Result<(), Box<dyn Error>> {
+    pub fn set(&mut self, target: &[usize], val: T) -> Result<(), Box<dyn Error>> {
         let target = self.translate_index(target)?;
         self.grid[target] = val;
         Ok(())
@@ -52,7 +52,7 @@ impl<T: Clone> Grid<T> {
         self.into_iter()
     }
 
-    fn translate_index(&self, target: Vec<usize>) -> Result<usize, Box<dyn Error>> {
+    fn translate_index(&self, target: &[usize]) -> Result<usize, Box<dyn Error>> {
         if target.len() != self.axes {
             return Err(format!(
                 "ERROR: Tried to index with {} dimensions when grid only has {} dimensions",
@@ -82,7 +82,7 @@ impl<T: Clone> Grid<T> {
 }
 
 // TODO: impl false_index
-fn false_index(index: usize, dimensions: &Vec<usize>) -> Vec<usize> {
+fn false_index(index: usize, dimensions: &[usize]) -> Vec<usize> {
     todo!()
 }
 
@@ -106,12 +106,12 @@ impl<'a, T: Clone> IntoIterator for &'a mut Grid<T> {
 
 pub struct GridIter<'a, T: Clone> {
     grid: Iter<'a, T>,
-    dimensions: Vec<usize>,
+    dimensions: &'a [usize],
 }
 
 impl<'a, T: Clone> GridIter<'a, T> {
     fn new(grid: &'a Grid<T>) -> Self {
-        let dimensions = grid.dimensions.clone();
+        let dimensions = &grid.dimensions[..];
         let grid = grid.grid.iter();
         Self { grid, dimensions }
     }
@@ -121,7 +121,7 @@ impl<'a, T: Clone> GridIter<'a, T> {
         P: FnMut(&'a T) -> bool,
     {
         if let Some(index) = Iterator::position(self, predicate) {
-            let index = false_index(index, &self.dimensions);
+            let index = false_index(index, self.dimensions);
             return Some(index);
         }
 
@@ -129,10 +129,10 @@ impl<'a, T: Clone> GridIter<'a, T> {
     }
 
     pub fn enumerate<P>(self) -> std::vec::IntoIter<(Vec<usize>, &'a T)> {
-        let dimensions = self.dimensions.clone();
+        let dimensions = self.dimensions;
         let mut res = Vec::with_capacity(self.grid.len());
         for (i, val) in Iterator::enumerate(self) {
-            let i = false_index(i, &dimensions);
+            let i = false_index(i, dimensions);
             res.push((i, val));
         }
         res.into_iter()
@@ -150,12 +150,12 @@ impl<'a, T: Clone> Iterator for GridIter<'a, T> {
 // TODO: impl position and enumerate for GridIterMut
 pub struct GridIterMut<'a, T: Clone> {
     grid: IterMut<'a, T>,
-    dimensions: Vec<usize>,
+    dimensions: &'a [usize],
 }
 
 impl<'a, T: Clone> GridIterMut<'a, T> {
     fn new(grid: &'a mut Grid<T>) -> Self {
-        let dimensions = grid.dimensions.clone();
+        let dimensions = &grid.dimensions[..];
         let grid = grid.grid.iter_mut();
         Self { grid, dimensions }
     }
@@ -189,11 +189,11 @@ mod tests {
         // 2d grid (10x10)
         let mut grid = Grid::new(0, vec![10, 10]);
 
-        grid.set(vec![5, 9], 5).unwrap();
-        grid.set(vec![0, 5], 32).unwrap();
-        grid.set(vec![5, 0], 25).unwrap();
-        grid.set(vec![9, 9], 56).unwrap();
-        grid.set(vec![0, 0], 7).unwrap();
+        grid.set(&[5, 9], 5).unwrap();
+        grid.set(&[0, 5], 32).unwrap();
+        grid.set(&[5, 0], 25).unwrap();
+        grid.set(&[9, 9], 56).unwrap();
+        grid.set(&[0, 0], 7).unwrap();
 
         assert_eq!(grid.grid[59], 5);
         assert_eq!(grid.grid[5], 32);
@@ -204,12 +204,12 @@ mod tests {
         // 3d grid (10x10x10)
         let mut grid = Grid::new(0, vec![10, 10, 10]);
 
-        grid.set(vec![3, 7, 6], 12).unwrap();
-        grid.set(vec![0, 4, 3], 23).unwrap();
-        grid.set(vec![5, 0, 7], 32).unwrap();
-        grid.set(vec![4, 6, 0], 63).unwrap();
-        grid.set(vec![9, 9, 9], 87).unwrap();
-        grid.set(vec![0, 0, 0], 34).unwrap();
+        grid.set(&[3, 7, 6], 12).unwrap();
+        grid.set(&[0, 4, 3], 23).unwrap();
+        grid.set(&[5, 0, 7], 32).unwrap();
+        grid.set(&[4, 6, 0], 63).unwrap();
+        grid.set(&[9, 9, 9], 87).unwrap();
+        grid.set(&[0, 0, 0], 34).unwrap();
 
         assert_eq!(grid.grid[376], 12);
         assert_eq!(grid.grid[43], 23);
@@ -221,9 +221,9 @@ mod tests {
         // 4d grid (10x10x10x10)
         let mut grid = Grid::new(0, vec![10, 10, 10, 10]);
 
-        grid.set(vec![5, 3, 7, 9], 20).unwrap();
-        grid.set(vec![9, 9, 9, 9], 24).unwrap();
-        grid.set(vec![0, 0, 0, 0], 10).unwrap();
+        grid.set(&[5, 3, 7, 9], 20).unwrap();
+        grid.set(&[9, 9, 9, 9], 24).unwrap();
+        grid.set(&[0, 0, 0, 0], 10).unwrap();
 
         assert_eq!(grid.grid[5379], 20);
         assert_eq!(grid.grid[9999], 24);
